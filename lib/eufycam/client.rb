@@ -6,7 +6,7 @@ require 'net/http'
 
 module Eufycam
   class Client
-    attr_accessor :email, :password
+    attr_accessor :email, :password, :auth_token, :auth_message
 
     def initialize(email:, password:)
       @email = email
@@ -26,29 +26,34 @@ module Eufycam
 
       Net::HTTP::Post.new(uri).tap do |post|
         post.body = body.to_json
-        p auth_token
         post['x-auth-token'] = auth_token unless auth_token.nil?
       end
     end
 
     def generate_auth_token
-      post('passport/login', nil, {
-             email: @email,
-             password: @password
-           }) do |response|
-        unless JSON.parse
-        JSON.parse(response.body)['data']['auth_token']
+      post('passport/login', nil, { email: @email, password: @password }) do |response|
+        unless JSON.parse(response.body.dig('code')) == 26006
+          @auth_token = JSON.parse(response.body)['data']['auth_token']
+          @auth_message = nil
+        else
+          @auth_message = JSON.parse(response.body)['msg']
+          @auth_token = nil
+        end
       end
     end
 
     def list_devices(auth_token = generate_auth_token)
+      return auth_message if auth_token.nil?
+
       post('app/get_devs_list', auth_token) do |response|
         JSON.parse(response.body)['data']
       end
     end
 
     def start_stream(device_name:)
-      auth_token = generate_auth_token
+      @auth_token ||= generate_auth_token
+      return auth_message if auth_token.nil?
+
       body = list_devices(auth_token)
              .detect { |d| d['device_name'] == device_name }
              .slice('station_sn', 'device_sn')
