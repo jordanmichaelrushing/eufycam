@@ -6,6 +6,8 @@ require 'net/http'
 
 module Eufycam
   class Client
+    attr_accessor :email, :password
+
     def initialize(email:, password:)
       @email = email
       @password = password
@@ -24,6 +26,7 @@ module Eufycam
 
       Net::HTTP::Post.new(uri).tap do |post|
         post.body = body.to_json
+        p auth_token
         post['x-auth-token'] = auth_token unless auth_token.nil?
       end
     end
@@ -33,6 +36,7 @@ module Eufycam
              email: @email,
              password: @password
            }) do |response|
+        unless JSON.parse
         JSON.parse(response.body)['data']['auth_token']
       end
     end
