@@ -30,8 +30,8 @@ module Eufycam
 
     def generate_auth_token
       post('passport/login', nil, {
-             email: ENV.fetch('EUFYCAM_EMAIL'),
-             password: ENV.fetch('EUFYCAM_PASSWORD')
+             email: @email,
+             password: @password
            }) do |response|
         JSON.parse(response.body)['data']['auth_token']
       end
