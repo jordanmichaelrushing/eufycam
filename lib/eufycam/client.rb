@@ -21,7 +21,7 @@ module Eufycam
       end
     end
 
-    def request(path, auth_token, body = nil)
+    def request(path, body = nil)
       uri = URI("https://mysecurity.eufylife.com/api/v1/#{path}")
 
       Net::HTTP::Post.new(uri).tap do |post|
@@ -33,6 +33,7 @@ module Eufycam
 
     def generate_auth_token
       post('passport/login', { email: @email, password: @password }) do |response|
+        p JSON.parse(response.body)
         unless JSON.parse(response.body).dig('code') == 26006
           @auth_token = JSON.parse(response.body)['data']['auth_token']
           @auth_message = nil
