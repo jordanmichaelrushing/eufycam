@@ -45,14 +45,14 @@ module Eufycam
           @auth_token = JSON.parse(response.body)['data']['auth_token']
           @auth_message = nil
           if JSON.parse(response.body).dig('msg') == "need validate code"
-            verify_code
+            send_verify_code
             @auth_message = 'Verification code sent to the account email address. Please login again with the verification code.'
           end
         end
       end
     end
 
-    def verify_code
+    def send_verify_code
       post('/sms/send/verify_code', {"message_type":2}) do |response|
         p JSON.parse(response.body)
       end
