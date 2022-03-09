@@ -8,7 +8,7 @@ module Eufycam
   class Client
     attr_accessor :email, :password, :auth_token, :auth_message, :verify_code
 
-    def initialize(email:, password:, auth_token:nil, verify_code:nil,)
+    def initialize(email:, password:, auth_token:nil, verify_code:nil)
       @email = email
       @password = password
       @auth_token = auth_token
