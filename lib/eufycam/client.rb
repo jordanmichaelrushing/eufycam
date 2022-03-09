@@ -6,11 +6,12 @@ require 'net/http'
 
 module Eufycam
   class Client
-    attr_accessor :email, :password, :auth_token, :auth_message
+    attr_accessor :email, :password, :auth_token, :auth_message, :verify_code
 
-    def initialize(email:, password:)
+    def initialize(email:, password:, verify_code:)
       @email = email
       @password = password
+      @verify_code = verify_code
     end
 
     def post(path, body = nil)
@@ -32,15 +33,28 @@ module Eufycam
     end
 
     def generate_auth_token
-      post('passport/login', { email: @email, password: @password }) do |response|
+      body = { email: @email, password: @password }
+      body[:verify_code] = @verify_code if verify_code
+
+      post('passport/login', body) do |response|
         p JSON.parse(response.body)
-        unless JSON.parse(response.body).dig('code') == 26006
-          @auth_token = JSON.parse(response.body)['data']['auth_token']
-          @auth_message = nil
-        else
+        if JSON.parse(response.body).dig('code') == 26006
           @auth_message = JSON.parse(response.body)['msg']
           @auth_token = nil
+        else
+          @auth_token = JSON.parse(response.body)['data']['auth_token']
+          @auth_message = nil
+          if JSON.parse(response.body).dig('msg') == "need validate code"
+            verify_code
+            @auth_message = 'Verification code sent to the account email address. Please login again with the verification code.'
+          end
         end
+      end
+    end
+
+    def verify_code
+      post('/sms/send/verify_code', {"message_type":2}) do |response|
+        p JSON.parse(response.body)
       end
     end
 
