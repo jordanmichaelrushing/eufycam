@@ -32,7 +32,7 @@ module Eufycam
 
     def generate_auth_token
       post('passport/login', nil, { email: @email, password: @password }) do |response|
-        unless JSON.parse(response.body.dig('code')) == 26006
+        unless JSON.parse(response.body).dig('code') == 26006
           @auth_token = JSON.parse(response.body)['data']['auth_token']
           @auth_message = nil
         else
