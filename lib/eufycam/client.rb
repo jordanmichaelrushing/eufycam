@@ -86,7 +86,7 @@ module Eufycam
       return false if auth_token.nil?
 
       device = get_device(device_name: device_name)
-      return "Failed to find #{device_name}" if device.blank
+      return "Failed to find #{device_name}" if device.blank?
 
       post('web/equipment/start_stream', device) do |response|
         JSON.parse(response.body)['data']
@@ -102,7 +102,7 @@ module Eufycam
       return false if auth_token.nil?
 
       device = get_device(device_name: device_name)
-      return "Failed to find #{device_name}" if device.blank
+      return "Failed to find #{device_name}" if device.blank?
 
       body = device.slice('device_sn')
       post("event/app/get_all_history_record", body) do |response|
