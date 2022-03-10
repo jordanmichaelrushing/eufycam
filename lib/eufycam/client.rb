@@ -41,23 +41,22 @@ module Eufycam
       body[:verify_code] = @verify_code if verify_code
 
       post('passport/login', body) do |response|
-        response = JSON.parse(response.body)
-        handle_login_cases(response)
+        handle_login_cases(JSON.parse(response.body))
       end
     end
 
     def handle_login_cases(response)
       case response.dig('code')
       when 0
-        success_path(response['data'])
+        success_path(response.dig('data'))
       when 26052
-        success_path(response['data'])
+        success_path(response.dig('data'))
         send_verify_code
         @auth_message = "Verification code sent to #{email}. Please login again with the verification code."
       else
         @auth_token = nil
         @verify_code = nil
-        @auth_message = response['msg']
+        @auth_message = response.dig('msg')
       end
       response
     end
