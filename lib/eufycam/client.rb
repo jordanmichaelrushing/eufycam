@@ -6,7 +6,7 @@ require 'net/http'
 
 module Eufycam
   class Client
-    attr_accessor :email, :password, :auth_token, :auth_message, :verify_code
+    attr_accessor :email, :password, :auth_token, :auth_message, :verify_code, :token_expires_at
 
     def initialize(email:, password:, auth_token:nil, verify_code:nil)
       @email = email
@@ -41,15 +41,17 @@ module Eufycam
       body[:verify_code] = @verify_code if verify_code
 
       post('passport/login', body) do |response|
-        if JSON.parse(response.body).dig('code') == 26006
-          @auth_message = JSON.parse(response.body)['msg']
+        resp = JSON.parse(response.body)
+        if resp.dig('code') == 26006
+          @auth_message = resp['msg']
           @auth_token = nil
           @verify_code = nil
         else
-          @auth_token = JSON.parse(response.body)['data']['auth_token']
+          @auth_token = resp['data']['auth_token']
+          @token_expires_at = resp['data']['token_expires_at']
           @auth_message = nil
           @verify_code = nil
-          if JSON.parse(response.body).dig('msg') == "need validate code"
+          if resp.dig('msg') == "need validate code"
             send_verify_code
             @auth_message = "Verification code sent to the #{email}. Please login again with the verification code."
           end
@@ -120,10 +122,3 @@ module Eufycam
     end
   end
 end
-
-
-eufy = Eufycam::Client.new(email: blah@gmail.com', password: 'mypassword')
-devices = eufy.list_devices
-if devices
-  devices.each do |device|
-    device['device_name'], device['cover_path']
