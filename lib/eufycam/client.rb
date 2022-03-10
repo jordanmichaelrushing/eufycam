@@ -41,50 +41,46 @@ module Eufycam
       body[:verify_code] = @verify_code if verify_code
 
       post('passport/login', body) do |response|
-        resp = JSON.parse(response.body)
-        if resp.dig('code') == 26006
-          @auth_message = resp['msg']
-          @auth_token = nil
-          @verify_code = nil
-        else
-          @auth_token = resp['data']['auth_token']
-          @token_expires_at = resp['data']['token_expires_at']
-          @auth_message = nil
-          @verify_code = nil
-          if resp.dig('msg') == "need validate code"
-            send_verify_code
-            @auth_message = "Verification code sent to the #{email}. Please login again with the verification code."
-          end
-        end
+        response = JSON.parse(response.body)
+        handle_login_cases(response)
       end
     end
 
+    def handle_login_cases(response)
+      @auth_token = nil
+      @verify_code = nil
+      @auth_message = response['msg']
+
+      if response.dig('code') != 26006
+        @auth_token = response['data']['auth_token']
+        @token_expires_at = response['data']['token_expires_at']
+        @auth_message = nil
+        @verify_code = nil
+        if response.dig('msg') == "need validate code"
+          send_verify_code
+          @auth_message = "Verification code sent to #{email}. Please login again with the verification code."
+        end
+      end
+      response
+    end
+
     def send_verify_code
-      post('/sms/send/verify_code', {"message_type":2}) {|f|}
+      post('/sms/send/verify_code', {"message_type":2})
     end
 
     def list_devices
-      @auth_token ||= generate_auth_token
-      return false if auth_token.nil?
-
       post('app/get_devs_list') do |response|
         JSON.parse(response.body)['data']
       end
     end
 
     def get_device(device_name:)
-      @auth_token ||= generate_auth_token
-      return false if auth_token.nil?
-
       list_devices
              .detect { |d| d['device_name'] == device_name }
              .slice('station_sn', 'device_sn')
     end
 
     def start_stream(device_name:)
-      @auth_token ||= generate_auth_token
-      return false if auth_token.nil?
-
       device = get_device(device_name: device_name)
       return "Failed to find #{device_name}" if device.blank?
 
@@ -98,9 +94,6 @@ module Eufycam
     end
 
     def get_event_history(device_name:)
-      @auth_token ||= generate_auth_token
-      return false if auth_token.nil?
-
       device = get_device(device_name: device_name)
       return "Failed to find #{device_name}" if device.blank?
 
