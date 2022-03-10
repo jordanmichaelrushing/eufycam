@@ -47,21 +47,26 @@ module Eufycam
     end
 
     def handle_login_cases(response)
-      @auth_token = nil
-      @verify_code = nil
-      @auth_message = response['msg']
-
-      if response.dig('code') != 26006
-        @auth_token = response['data']['auth_token']
-        @token_expires_at = response['data']['token_expires_at']
-        @auth_message = nil
+      case response.dig('code')
+      when 0
+        success_path(response['data'])
+      when 26052
+        success_path(response['data'])
+        send_verify_code
+        @auth_message = "Verification code sent to #{email}. Please login again with the verification code."
+      else
+        @auth_token = nil
         @verify_code = nil
-        if response.dig('msg') == "need validate code"
-          send_verify_code
-          @auth_message = "Verification code sent to #{email}. Please login again with the verification code."
-        end
+        @auth_message = response['msg']
       end
       response
+    end
+
+    def success_path(data)
+      @auth_token = data['auth_token']
+      @token_expires_at = data['token_expires_at']
+      @auth_message = nil
+      @verify_code = nil
     end
 
     def send_verify_code
