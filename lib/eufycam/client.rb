@@ -28,7 +28,7 @@ module Eufycam
     end
 
     def request(path, body = nil)
-      uri = URI("https://mysecurity.eufylife.com/api/v1/#{path}")
+      uri = URI("https://mysecurity.eufylife.com/api/v2/#{path}")
 
       Net::HTTP::Post.new(uri).tap do |post|
         post.body = body.to_json
@@ -82,11 +82,17 @@ module Eufycam
       list_devices
              .detect { |d| d['device_name'] == device_name }
              .slice('station_sn', 'device_sn')
+    rescue => e
+      []
     end
 
-    def start_stream(device_name:)
-      device = get_device(device_name: device_name)
-      return "Failed to find #{device_name}" if device.blank?
+    def start_stream(device_name:nil, station_sn:nil, device_sn:nil)
+      device = {station_sn: station_sn, device_sn: device_sn}
+
+      if device_name.present?
+        device = get_device(device_name: device_name)
+        return "Failed to find #{device_name}" if device.blank?
+      end
 
       post('web/equipment/start_stream', device) do |response|
         JSON.parse(response.body)['data']
