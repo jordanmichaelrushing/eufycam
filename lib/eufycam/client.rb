@@ -28,7 +28,7 @@ module Eufycam
     end
 
     def request(path, body = nil)
-      uri = URI("https://mysecurity.eufylife.com/api/v2/#{path}")
+      uri = URI("https://mysecurity.eufylife.com/api/v1/#{path}")
 
       Net::HTTP::Post.new(uri).tap do |post|
         post.body = body.to_json
