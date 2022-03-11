@@ -109,7 +109,7 @@ module Eufycam
 
 
     def timelapse(device_name, directory)
-      url = start_stream(device_name)
+      url = start_stream(device_name: device_name)
 
       loop do
         capture_image(url, File.expand_path("#{directory}/#{Time.now.to_i}.png"))
